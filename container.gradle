@@ -1,0 +1,73 @@
+
+configurations{
+    wildflyDownload
+}
+
+dependencies {
+    wildflyDownload ("org.wildfly:wildfly-dist:${versions.wildfly}@zip")
+}
+
+task wildflyContainerCopyWildflyZip(type: Copy) {
+    configurations.wildflyDownload.each {
+        from zipTree(it)
+    }
+    into file(wildflyHome).getParentFile()
+    // exclude all volatile files as they mess up the upToDate check
+//    exclude "**/log/*"
+//    exclude "**/tmp/*"
+//    exclude "**/logging.properties"
+//    exclude "**/configuration/standalone*.xml" // no confusion with our own
+    doLast {
+        assert file(wildflyHome).exists()
+    }
+}
+
+//apply plugin: 'groovy'
+
+//dependencies {
+//    compile 'org.codehaus.groovy:groovy-all:2.2.1'
+//}
+
+// container deployment tasks
+task appUndeploy(type: WildflyCli) {
+    group "myapplication"
+    description "undeploys a war from the local container"
+    cli = "undeploy ${war.baseName}.${war.extension}"
+    ignoreExitValue = true
+}
+task appDeploy(type: WildflyCli) {
+    group "myapplication"
+    description "deploys a war to the local container"
+    dependsOn war
+    cli = "deploy ${war.archivePath} --name=${war.baseName}.${war.extension} --force"
+    mustRunAfter appUndeploy
+
+}
+
+task shutdownServer(type: WildflyCli) {
+    group "container"
+    description "shutdown running server"
+    cli = "shutdown"
+    ignoreExitValue = true
+}
+
+task addAdminUser(type: AddAdminUser){
+    group "container"
+    description "add user to wildfly"
+}
+
+task startServer(type: StartServer){
+    group "container"
+    description "run standalone server"
+}
+
+task startWildflyContainerInstall(group: "container") {
+    dependsOn wildflyContainerCopyWildflyZip
+    dependsOn addAdminUser
+    dependsOn startServer
+}
+
+task clearWildflyContainerInstall(type: Delete, group: "container") {
+    delete wildflyHome
+    dependsOn shutdownServer
+}

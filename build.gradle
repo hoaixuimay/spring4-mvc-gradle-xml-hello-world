@@ -45,3 +45,30 @@ eclipse {
   }
 }
 
+
+apply plugin: 'base'
+//
+// Load versions and environment properties from properties files
+//
+ext {
+    versions = new Properties()
+    file("versions.properties").withReader {
+        versions.load it
+    }
+}
+
+def setDefault = { key, value ->
+    if(!project.hasProperty(key)){
+        ext[key] = value
+    }
+}
+
+// wildfly container
+setDefault 'wildflyHome', "/home/hoaipham/work/wildfly/wildfly-${versions.wildfly}"
+setDefault 'wildflyController', "localhost:9990"
+setDefault 'wildflyCli', "${wildflyHome}/bin/jboss-cli.sh"
+
+
+// imports depending on project setup
+apply from: 'container.gradle'
+
