@@ -54,11 +54,13 @@ task shutdownServer(type: WildflyCli) {
 task addAdminUser(type: AddAdminUser){
     group "container"
     description "add user to wildfly"
+    mustRunAfter wildflyContainerCopyWildflyZip
 }
 
 task startServer(type: StartServer){
     group "container"
     description "run standalone server"
+    mustRunAfter addAdminUser
 }
 
 task startWildflyContainerInstall(group: "container") {
